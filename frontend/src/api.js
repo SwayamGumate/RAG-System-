@@ -22,7 +22,7 @@ async function handleResponse(response) {
   return response.json();
 }
 
-export async function fetchHealthStatus(timeoutMs = 25000) {
+export async function fetchHealthStatus(timeoutMs = 90000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 

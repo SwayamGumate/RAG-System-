@@ -33,6 +33,7 @@ export default function App() {
   const [isColdBooting, setIsColdBooting] = useState(false);
   
   const [toast, setToast] = useState({ message: '', type: 'info' });
+  const [coldBootSeconds, setColdBootSeconds] = useState(0);
 
   const showToast = (message, type = 'error') => {
     setToast({ message, type });
@@ -51,9 +52,10 @@ export default function App() {
   // Load backend data with cold-start wake-up detector
   const loadData = async (isRetry = false) => {
     try {
-      const health = await fetchHealthStatus(25000);
+      const health = await fetchHealthStatus(90000);
       setHealthData(health);
       setIsColdBooting(false);
+      setColdBootSeconds(0);
 
       
       const docsRes = await fetchDocuments();
@@ -69,38 +71,73 @@ export default function App() {
     }
   };
 
-  // Cold boot polling loop: if backend is sleeping, ping every 4s until active
+  // Cold boot sequential retry loop: ping every 8s (non-overlapping) until backend wakes
   useEffect(() => {
-    let intervalId = null;
+    let stopped = false;
+    let timerId = null;
+    let secondsTimer = null;
 
-    const checkServer = async () => {
-      const isOnline = await loadData(false);
-      if (!isOnline) {
-        intervalId = setInterval(async () => {
-          const res = await loadData(true);
-          if (res) {
-            clearInterval(intervalId);
-          }
-        }, 4000);
-      }
+    const startSecondCounter = () => {
+      let secs = 0;
+      secondsTimer = setInterval(() => {
+        secs += 1;
+        setColdBootSeconds(secs);
+      }, 1000);
     };
 
-    checkServer();
+    const stopSecondCounter = () => {
+      if (secondsTimer) {
+        clearInterval(secondsTimer);
+        secondsTimer = null;
+      }
+      setColdBootSeconds(0);
+    };
+
+    const runLoop = async () => {
+      const isOnline = await loadData(false);
+      if (isOnline || stopped) {
+        stopSecondCounter();
+        return;
+      }
+      // Backend is sleeping — start the second counter and keep retrying
+      startSecondCounter();
+      const retry = async () => {
+        if (stopped) return;
+        const res = await loadData(true);
+        if (res) {
+          stopSecondCounter();
+          return;
+        }
+        // Wait 6 seconds then try again (non-overlapping)
+        timerId = setTimeout(retry, 6000);
+      };
+      timerId = setTimeout(retry, 6000);
+    };
+
+    runLoop();
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      stopped = true;
+      if (timerId) clearTimeout(timerId);
+      stopSecondCounter();
     };
   }, []);
 
   const handleUpload = async (fileList) => {
     if (!fileList || fileList.length === 0) return;
+    if (isColdBooting) {
+      showToast("Backend is still waking up — please wait for the connection banner to disappear.", "error");
+      return;
+    }
     setIsUploading(true);
     try {
       const res = await uploadDocuments(fileList);
       showToast(res.message || "Document indexed successfully", "success");
       await loadData();
     } catch (err) {
-      showToast(err.message || "Failed to upload document", "error");
+      const msg = err.message || "Failed to upload document";
+      const hint = msg.toLowerCase().includes('fetch') ? `${msg}. Backend may still be waking up — please wait a moment and retry.` : msg;
+      showToast(hint, "error");
     } finally {
       setIsUploading(false);
     }
@@ -170,7 +207,7 @@ export default function App() {
       {isColdBooting && (
         <div className="bg-amber-500 text-obsidian-950 px-4 py-2 text-xs font-semibold flex items-center justify-center gap-2 shadow-md">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Waking up Render backend web service (~30s cold start for free tier)... Please wait.</span>
+          <span>Waking up Render backend web service (~30-60s cold start for free tier)... Please wait{coldBootSeconds > 0 ? ` (${coldBootSeconds}s)` : ''}.</span>
         </div>
       )}
 
