@@ -1,5 +1,8 @@
-const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-const API_BASE_URL = BASE_URL ? `${BASE_URL}/api` : '/api';
+// Default fallback to your live Render backend URL if VITE_API_URL is not set in Vercel
+const RENDER_BACKEND_URL = 'https://rag-system-fj8m.onrender.com';
+const RAW_URL = import.meta.env.VITE_API_URL || RENDER_BACKEND_URL;
+const BASE_URL = RAW_URL.replace(/\/$/, '');
+const API_BASE_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 async function handleResponse(response) {
   if (!response.ok) {
@@ -17,8 +20,7 @@ async function handleResponse(response) {
   return response.json();
 }
 
-export async function fetchHealthStatus(timeoutMs = 15000) {
-
+export async function fetchHealthStatus(timeoutMs = 20000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
