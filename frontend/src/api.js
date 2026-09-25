@@ -1,10 +1,15 @@
-const RENDER_BACKEND_URL = 'https://rag-system-fj8m.onrender.com';
-let RAW_URL = import.meta.env.VITE_API_URL || RENDER_BACKEND_URL;
-if (RAW_URL.startsWith('http://')) {
-  RAW_URL = RAW_URL.replace('http://', 'https://');
-}
-const BASE_URL = RAW_URL.replace(/\/$/, '');
-const API_BASE_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
+// API base URL strategy:
+// - In production (Vercel): use the same-origin /api/* proxy defined in vercel.json
+//   which forwards requests to the Render backend. This eliminates CORS entirely.
+// - In local dev with explicit VITE_API_URL: use the provided URL (points to local backend).
+// - Local dev without VITE_API_URL: also use /api/* which vite.config.js proxies to localhost:8000.
+
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+
+// Use same-origin proxy unless explicitly overridden by env var
+const API_BASE_URL = VITE_API_URL
+  ? `${VITE_API_URL.replace(/\/$/, '').replace(/\/api$/, '')}/api`
+  : '/api';
 
 async function handleResponse(response) {
   if (!response.ok) {
