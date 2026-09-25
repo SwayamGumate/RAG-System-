@@ -51,9 +51,10 @@ export default function App() {
   // Load backend data with cold-start wake-up detector
   const loadData = async (isRetry = false) => {
     try {
-      const health = await fetchHealthStatus(4000);
+      const health = await fetchHealthStatus(25000);
       setHealthData(health);
       setIsColdBooting(false);
+
       
       const docsRes = await fetchDocuments();
       setDocuments(docsRes.documents || []);

@@ -67,16 +67,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS dynamically based on environment ALLOWED_ORIGINS settings
+# Configure CORS with regex support for Vercel deployment domains
 allowed_origins = settings.allowed_origins
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if allowed_origins == ["*"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*|https://.*\.onrender\.com",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 # Include API Router
 app.include_router(api_router)
