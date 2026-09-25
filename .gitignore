@@ -1,0 +1,32 @@
+# Environment & Secrets (NEVER push API keys)
+.env
+.env.local
+*.env
+backend/.env
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+.pytest_cache/
+
+# Node & Frontend Build Artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.DS_Store
+*.log
+
+# OS generated files
+Thumbs.db
+desktop.ini
+
+# Optional: Local FAISS vector index files (Auto-generated on startup)
+backend/data/faiss_store/faiss_index.bin
+backend/data/faiss_store/metadata.json
+!backend/data/demo_document.txt

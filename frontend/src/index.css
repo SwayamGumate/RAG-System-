@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Custom thin scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-obsidian-800 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-obsidian-700;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/80 dark:bg-obsidian-900/80 backdrop-blur-md border border-slate-200/80 dark:border-obsidian-800/80;
+}
+
+.glass-card {
+  @apply bg-white dark:bg-obsidian-850 border border-slate-200/60 dark:border-obsidian-800/60 shadow-sm dark:shadow-none;
+}

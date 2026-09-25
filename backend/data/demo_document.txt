@@ -1,0 +1,28 @@
+Synthetix RAG System Overview & Architecture Specifications
+
+1. Core Architecture:
+Synthetix is an enterprise-grade Retrieval-Augmented Generation (RAG) Document Q&A platform.
+It combines local dense vector retrieval with high-speed LLM context synthesis.
+
+2. Document Ingestion & Chunking:
+Uploaded PDF and TXT documents are parsed and recursively split using character separators.
+The target chunk size is approximately 500 tokens (2,000 characters) with a 50-token overlap (200 characters).
+This chunk size balances detailed context preservation with embedding model window constraints.
+
+3. Embeddings & Vector Search:
+Dense vector embeddings are computed using sentence-transformers/all-MiniLM-L6-v2, generating 384-dimensional unit vectors.
+Vectors are indexed using FAISS (Facebook AI Similarity Search) with Flat Inner Product (IndexFlatIP) to compute exact Cosine Similarity.
+Index FlatIP calculates inner product on normalized vectors, achieving deterministic sub-millisecond retrieval.
+
+4. Zero-Hallucination Guardrails:
+Queries with top similarity scores below a strict threshold (SIMILARITY_THRESHOLD = 0.15) trigger an explicit fallback:
+"The requested information was not found in the uploaded document(s)."
+This guardrail prevents the model from generating ungrounded facts or hallucinating outside the provided context.
+
+5. LLM Synthesis & Integration:
+Synthetix connects directly to Groq's LPU (Language Processing Unit) API for ultra-fast response generation using high-capacity open models like Llama 3.3 70B, Mixtral 8x7b, and OpenAI-compatible endpoints.
+It also supports local Ollama daemons and an extractive synthesis fallback for 100% offline functionality.
+
+6. Deployment Architecture:
+The FastAPI backend runs inside a lightweight Docker container on Render's web service tier.
+The React + Vite + Tailwind CSS frontend is deployed on Vercel with zero cold-start delay for static assets.
