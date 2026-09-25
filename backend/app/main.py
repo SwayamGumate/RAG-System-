@@ -58,7 +58,6 @@ async def lifespan(app: FastAPI):
     if settings.AUTO_INDEX_DEMO_DOC:
         auto_index_demo_document()
     yield
-    # Shutdown logic (if any)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -67,26 +66,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS with regex support for Vercel deployment domains
-allowed_origins = settings.allowed_origins
-
-if allowed_origins == ["*"]:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:.*|https://.*\.onrender\.com",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
+# Universal CORS Middleware for seamless public frontend access across all domains
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include API Router
 app.include_router(api_router)
@@ -96,8 +83,7 @@ async def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
         "docs": "/docs",
-        "health": "/api/health",
-        "allowed_origins": allowed_origins
+        "health": "/api/health"
     }
 
 if __name__ == "__main__":
